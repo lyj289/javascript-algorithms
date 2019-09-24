@@ -9,6 +9,8 @@ export default class Heap {
    * @param {Function} [comparatorFunction]
    */
   constructor(comparatorFunction) {
+    // ES6新增，用来检测是否由构造函数调用
+    // Heap是个抽象类，不能直接实例，需要通过MinHeap/MaxHeap实例化
     if (new.target === Heap) {
       throw new TypeError('Cannot construct Heap instance directly');
     }
@@ -19,7 +21,7 @@ export default class Heap {
   }
 
   /**
-   * @param {number} parentIndex
+   * @param {number} parentIndex 根据Index获取左子节点索引
    * @return {number}
    */
   getLeftChildIndex(parentIndex) {
@@ -35,7 +37,7 @@ export default class Heap {
   }
 
   /**
-   * @param {number} childIndex
+   * @param {number} childIndex 根据Index获取父节点索引
    * @return {number}
    */
   getParentIndex(childIndex) {
@@ -98,9 +100,14 @@ export default class Heap {
     const tmp = this.heapContainer[indexTwo];
     this.heapContainer[indexTwo] = this.heapContainer[indexOne];
     this.heapContainer[indexOne] = tmp;
+
+    // 可以这样交换
+    // [this.heapContainer[indexTwo], this.heapContainer[indexOne]] =
+    //   [this.heapContainer[indexOne], this.heapContainer[indexTwo]]
   }
 
   /**
+   * 获取根节点元素
    * @return {*}
    */
   peek() {
@@ -112,7 +119,8 @@ export default class Heap {
   }
 
   /**
-   * @return {*}
+   * Sort关键过程，交换头尾两个元素值，移除头元素，并重新递归构建新Heap
+   * @return {*} 返回头元素，此时头元素为一个极值
    */
   poll() {
     if (this.heapContainer.length === 0) {
@@ -127,6 +135,8 @@ export default class Heap {
 
     // Move the last element from the end to the head.
     this.heapContainer[0] = this.heapContainer.pop();
+
+    // 元素减少后，重新递归构建新Heap
     this.heapifyDown();
 
     return item;
@@ -218,14 +228,18 @@ export default class Heap {
   }
 
   /**
+   * 从下向上重新建堆
    * @param {number} [customStartIndex]
    */
   heapifyUp(customStartIndex) {
+    // 在add时，默认从新增元素开始，向上重新建堆，这样可以保证下次ADD前，前面的元素排序
+    // 已经基本OK,只需考虑当前元素
     // Take the last element (last in array or the bottom left in a tree)
     // in the heap container and lift it up until it is in the correct
     // order with respect to its parent element.
     let currentIndex = customStartIndex || this.heapContainer.length - 1;
 
+    // 不断的和父元素进行比较，如果大小关系不满足Heap条件，就进行交换
     while (
       this.hasParent(currentIndex)
       && !this.pairIsInCorrectOrder(this.parent(currentIndex), this.heapContainer[currentIndex])
@@ -236,16 +250,21 @@ export default class Heap {
   }
 
   /**
+   * 从上向下重新建堆
    * @param {number} [customStartIndex]
    */
   heapifyDown(customStartIndex = 0) {
     // Compare the parent element to its children and swap parent with the appropriate
     // child (smallest child for MinHeap, largest child for MaxHeap).
     // Do the same for next children after swap.
+    // 当使用Heap排序时，顶部元素被赋值为尾元素，此时，需要从顶向下重新建堆
     let currentIndex = customStartIndex;
     let nextIndex = null;
 
     while (this.hasLeftChild(currentIndex)) {
+      // 与二叉树不同，Heap结构中，左右节点值的关系是不固定的
+      // 左节点可能小于右节点，也可能大于右节点，只能保证左右节点和父节点的值大于关系固定
+      // 取左右节点中，较大（For MaxHeap）或较小(For MinHeap)的值与父节点进行交换
       if (
         this.hasRightChild(currentIndex)
         && this.pairIsInCorrectOrder(this.rightChild(currentIndex), this.leftChild(currentIndex))
@@ -255,6 +274,8 @@ export default class Heap {
         nextIndex = this.getLeftChildIndex(currentIndex);
       }
 
+      // 除去最新的变换节点，比较顶节点，其他节点之间的关系是在之前的过程就调整好的
+      // 因此，若最近两个节点关系正确，则可以认为该节点的子树关系是OK的，可以结束
       if (this.pairIsInCorrectOrder(
         this.heapContainer[currentIndex],
         this.heapContainer[nextIndex],
