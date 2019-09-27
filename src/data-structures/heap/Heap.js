@@ -261,6 +261,13 @@ export default class Heap {
     let currentIndex = customStartIndex;
     let nextIndex = null;
 
+    // 假设在MaxHeap中，节点初始关系为P->C->C1, 首先进行堆构建，
+    // 继续假设子节点C大于父节点P， 则需要将子节点C与父节点P进行交换，
+    // 父节点P下沉做为子节点，此时新的节点关系为C->P->C1,
+    // 如果C1>P,则需要继续将节点P下沉，变为C->C1->P
+    // 以上例子说明，只要一个节点位置发生变化，就需要逐层向下递归，以确保节点关系正确
+    // 此处的while循环就是这个道路，虽然上面只有一个参数customStartIndex， 但考虑
+    // 节点可能互换，就需要进行向下递归，把当前节点的所有节点都进行一次比较
     while (this.hasLeftChild(currentIndex)) {
       // 与二叉树不同，Heap结构中，左右节点值的关系是不固定的
       // 左节点可能小于右节点，也可能大于右节点，只能保证左右节点和父节点的值大于关系固定
@@ -274,8 +281,8 @@ export default class Heap {
         nextIndex = this.getLeftChildIndex(currentIndex);
       }
 
-      // 除去最新的变换节点，比较顶节点，其他节点之间的关系是在之前的过程就调整好的
-      // 因此，若最近两个节点关系正确，则可以认为该节点的子树关系是OK的，可以结束
+      // 如果节点大小关系正确，说明不用进行节点互换，直接退出，
+      // 否则进行递归检测与修正
       if (this.pairIsInCorrectOrder(
         this.heapContainer[currentIndex],
         this.heapContainer[nextIndex],
